@@ -1,5 +1,9 @@
 <template>
-  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+  <div 
+    v-if="show" 
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+    @click.self="$emit('cancel')"
+  >
     <div class="bg-white rounded-lg max-w-sm w-full p-6">
       <!-- Icon -->
       <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-danger-100 mb-4">
@@ -40,6 +44,10 @@
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 
 defineProps({
+  show: {
+    type: Boolean,
+    default: false
+  },
   title: {
     type: String,
     required: true

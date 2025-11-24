@@ -1,5 +1,7 @@
 package com.expensetracker.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -38,12 +40,15 @@ public class Category {
     private String color; // Hex color code for UI display
     
     @Column(name = "is_system")
+    @JsonProperty("isSystem")  // Force JSON to use "isSystem" instead of "system"
     private boolean isSystem = false; // System categories cannot be deleted
     
-    // Relationships
+    // Relationships - Ignored in JSON responses to prevent lazy loading issues
     @OneToMany(mappedBy = "category")
+    @JsonIgnore
     private List<Transaction> transactions = new ArrayList<>();
     
     @OneToMany(mappedBy = "category")
+    @JsonIgnore
     private List<Budget> budgets = new ArrayList<>();
 }

@@ -61,3 +61,92 @@ out/
 *.zip
 *.tar.gz
 *.rar
+
+
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Backend (Java/Spring Boot)
+expense-tracker-backend/target/
+expense-tracker-backend/*.jar
+expense-tracker-backend/*.war
+expense-tracker-backend/*.class
+expense-tracker-backend/.classpath
+expense-tracker-backend/.project
+expense-tracker-backend/.settings/
+expense-tracker-backend/bin/
+expense-tracker-backend/.mvn/
+expense-tracker-backend/mvnw
+expense-tracker-backend/mvnw.cmd
+
+# Frontend (Vue.js)
+expense-tracker-frontend/node_modules/
+expense-tracker-frontend/dist/
+expense-tracker-frontend/.env.local
+expense-tracker-frontend/.env.*.local
+expense-tracker-frontend/npm-debug.log*
+expense-tracker-frontend/yarn-debug.log*
+expense-tracker-frontend/yarn-error.log*
+expense-tracker-frontend/pnpm-debug.log*
+expense-tracker-frontend/.eslintcache
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite
+*.h2.db
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Sensitive config files (add these!)
+**/application-local.yml
+**/application-prod.yml
+**/secrets.yml
+**/*.pem
+**/*.key
+**/*.crt
+**/keystore.jks
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Build files
+build/
+out/
+
+# Package files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# OS specific
+Thumbs.db
+Desktop.ini
+
+# Backup files
+*.bak
+*.backup
+*.old

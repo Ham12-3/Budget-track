@@ -6,9 +6,9 @@ services:
     image: postgres:15-alpine
     container_name: expense-tracker-db
     environment:
-      POSTGRES_DB: expensetracker
-      POSTGRES_USER: expense_user
-      POSTGRES_PASSWORD: expense_pass_2024
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -16,7 +16,7 @@ services:
     networks:
       - expense-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U expense_user"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -31,10 +31,10 @@ services:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/expensetracker
-      SPRING_DATASOURCE_USERNAME: expense_user
-      SPRING_DATASOURCE_PASSWORD: expense_pass_2024
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
     depends_on:
       postgres:
         condition: service_healthy
