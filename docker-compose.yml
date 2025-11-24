@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: expense-tracker-db
+    environment:
+      POSTGRES_DB: expensetracker
+      POSTGRES_USER: expense_user
+      POSTGRES_PASSWORD: expense_pass_2024
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - expense-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U expense_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot Backend
+  backend:
+    build:
+      context: ./expense-tracker-backend
+      dockerfile: Dockerfile
+    container_name: expense-tracker-backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/expensetracker
+      SPRING_DATASOURCE_USERNAME: expense_user
+      SPRING_DATASOURCE_PASSWORD: expense_pass_2024
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - expense-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Vue.js Frontend
+  frontend:
+    build:
+      context: ./expense-tracker-frontend
+      dockerfile: Dockerfile
+    container_name: expense-tracker-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - expense-network
+
+networks:
+  expense-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
