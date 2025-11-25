@@ -41,33 +41,32 @@
       </div>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+      <!-- Summary Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
       <div class="stat-card">
         <p class="text-sm text-gray-600 mb-1">Total Income</p>
-        <p class="text-2xl font-bold text-success-600">+$12,500</p>
-        <p class="text-xs text-gray-500 mt-1">↑ 15% from last period</p>
+        <p class="text-2xl font-bold text-success-600">+${{ formatMoney(summary.totalIncome) }}</p>
+        <p class="text-xs text-gray-500 mt-1">{{ selectedPeriodLabel }}</p>
       </div>
       
       <div class="stat-card">
         <p class="text-sm text-gray-600 mb-1">Total Expenses</p>
-        <p class="text-2xl font-bold text-danger-600">-$8,350</p>
-        <p class="text-xs text-gray-500 mt-1">↓ 5% from last period</p>
+        <p class="text-2xl font-bold text-danger-600">-${{ formatMoney(summary.totalExpenses) }}</p>
+        <p class="text-xs text-gray-500 mt-1">{{ selectedPeriodLabel }}</p>
       </div>
       
       <div class="stat-card">
         <p class="text-sm text-gray-600 mb-1">Net Savings</p>
-        <p class="text-2xl font-bold text-primary-600">$4,150</p>
-        <p class="text-xs text-gray-500 mt-1">33.2% savings rate</p>
+        <p class="text-2xl font-bold text-primary-600">${{ formatMoney(summary.netSavings) }}</p>
+        <p class="text-xs text-gray-500 mt-1">{{ summary.savingsRate }}% savings rate</p>
       </div>
       
       <div class="stat-card">
         <p class="text-sm text-gray-600 mb-1">Avg Daily Spend</p>
-        <p class="text-2xl font-bold text-gray-900">$278</p>
-        <p class="text-xs text-gray-500 mt-1">30 days average</p>
+        <p class="text-2xl font-bold text-gray-900">${{ formatMoney(summary.avgDailySpend) }}</p>
+        <p class="text-xs text-gray-500 mt-1">{{ summary.daysCount }} days average</p>
       </div>
     </div>
-
     <!-- Charts Section -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
       <!-- Income vs Expenses Chart -->
@@ -140,60 +139,247 @@
     </div>
   </div>
 </template>
-
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ArrowDownTrayIcon } from '@heroicons/vue/24/outline'
 import SpendingTrendChart from '@/components/charts/SpendingTrendChart.vue'
+import { useUserStore } from '@/stores/user'
+import { useToast } from 'vue-toastification'
+import api from '@/services/api'
+
+const userStore = useUserStore()
+const toast = useToast()
 
 // Data
+const loading = ref(false)
 const reportType = ref('monthly')
 const selectedPeriod = ref('current')
 
-const topCategories = ref([
-  { name: 'Food & Dining', icon: '🍔', amount: '2,150', percentage: 65 },
-  { name: 'Transportation', icon: '🚗', amount: '1,800', percentage: 54 },
-  { name: 'Shopping', icon: '🛍️', amount: '1,500', percentage: 45 },
-  { name: 'Bills & Utilities', icon: '💡', amount: '1,200', percentage: 36 },
-  { name: 'Entertainment', icon: '🎬', amount: '800', percentage: 24 }
-])
+const summary = ref({
+  totalIncome: 0,
+  totalExpenses: 0,
+  netSavings: 0,
+  savingsRate: 0,
+  avgDailySpend: 0,
+  daysCount: 30
+})
 
-const monthlyData = ref([
-  { name: 'January', income: '8,500', expenses: '6,200', net: 2300, savingsRate: 27 },
-  { name: 'February', income: '8,500', expenses: '5,800', net: 2700, savingsRate: 32 },
-  { name: 'March', income: '9,200', expenses: '6,500', net: 2700, savingsRate: 29 },
-  { name: 'April', income: '8,500', expenses: '6,100', net: 2400, savingsRate: 28 },
-  { name: 'May', income: '8,500', expenses: '5,900', net: 2600, savingsRate: 31 },
-  { name: 'June', income: '8,500', expenses: '6,350', net: 2150, savingsRate: 25 }
-])
-
+const topCategories = ref([])
+const monthlyData = ref([])
 const chartData = ref({
-  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-  datasets: [
-    {
-      label: 'Income',
-      data: [8500, 8500, 9200, 8500, 8500, 8500],
-      borderColor: '#22c55e',
-      backgroundColor: 'rgba(34, 197, 94, 0.1)'
-    },
-    {
-      label: 'Expenses',
-      data: [6200, 5800, 6500, 6100, 5900, 6350],
-      borderColor: '#ef4444',
-      backgroundColor: 'rgba(239, 68, 68, 0.1)'
-    }
-  ]
+  labels: [],
+  datasets: []
+})
+
+// Computed
+const selectedPeriodLabel = computed(() => {
+  const labels = {
+    current: 'This month',
+    last3: 'Last 3 months',
+    last6: 'Last 6 months',
+    year: 'This year'
+  }
+  return labels[selectedPeriod.value]
 })
 
 // Methods
-const generateReport = () => {
-  // Generate report based on selected type and period
-  console.log('Generating report:', reportType.value, selectedPeriod.value)
+const formatMoney = (amount) => {
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(amount || 0)
+}
+
+const getDateRange = () => {
+  const now = new Date()
+  let startDate, endDate = new Date()
+  
+  switch (selectedPeriod.value) {
+    case 'current':
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+      break
+    case 'last3':
+      startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1)
+      break
+    case 'last6':
+      startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1)
+      break
+    case 'year':
+      startDate = new Date(now.getFullYear(), 0, 1)
+      break
+    default:
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+  }
+  
+  return {
+    startDate: startDate.toISOString().split('T')[0],
+    endDate: endDate.toISOString().split('T')[0]
+  }
+}
+
+const generateReport = async () => {
+  loading.value = true
+  const userId = userStore.currentUser.id
+  const { startDate, endDate } = getDateRange()
+  
+  try {
+    // Fetch all transactions for the period
+    const transactionsResponse = await api.get(`/users/${userId}/transactions`, {
+      params: {
+        startDate,
+        endDate,
+        page: 0,
+        size: 1000,
+        sortBy: 'transactionDate',
+        sortDirection: 'ASC'
+      }
+    })
+    
+    const transactions = transactionsResponse.data.content || []
+    
+    // Calculate summary
+    const totalIncome = transactions
+      .filter(t => t.type === 'INCOME')
+      .reduce((sum, t) => sum + parseFloat(t.amount), 0)
+    
+    const totalExpenses = transactions
+      .filter(t => t.type === 'EXPENSE')
+      .reduce((sum, t) => sum + parseFloat(t.amount), 0)
+    
+    const netSavings = totalIncome - totalExpenses
+    const savingsRate = totalIncome > 0 ? Math.round((netSavings / totalIncome) * 100) : 0
+    
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+    const daysCount = Math.ceil((end - start) / (1000 * 60 * 60 * 24))
+    const avgDailySpend = daysCount > 0 ? totalExpenses / daysCount : 0
+    
+    summary.value = {
+      totalIncome,
+      totalExpenses,
+      netSavings,
+      savingsRate,
+      avgDailySpend,
+      daysCount
+    }
+    
+    // Calculate top categories
+    const categoryMap = {}
+    transactions
+      .filter(t => t.type === 'EXPENSE')
+      .forEach(t => {
+        const catName = t.category?.name || 'Other'
+        if (!categoryMap[catName]) {
+          categoryMap[catName] = {
+            name: catName,
+            icon: t.category?.icon || '📌',
+            amount: 0
+          }
+        }
+        categoryMap[catName].amount += parseFloat(t.amount)
+      })
+    
+    const categoriesArray = Object.values(categoryMap)
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 5)
+    
+    const maxAmount = categoriesArray[0]?.amount || 1
+    topCategories.value = categoriesArray.map(cat => ({
+      ...cat,
+      percentage: Math.round((cat.amount / maxAmount) * 100)
+    }))
+    
+    // Generate monthly breakdown
+    const monthlyMap = {}
+    transactions.forEach(t => {
+      const date = new Date(t.transactionDate)
+      const monthKey = `${date.getFullYear()}-${date.getMonth()}`
+      const monthName = date.toLocaleString('default', { month: 'long', year: 'numeric' })
+      
+      if (!monthlyMap[monthKey]) {
+        monthlyMap[monthKey] = {
+          name: monthName,
+          income: 0,
+          expenses: 0,
+          date: date
+        }
+      }
+      
+      if (t.type === 'INCOME') {
+        monthlyMap[monthKey].income += parseFloat(t.amount)
+      } else {
+        monthlyMap[monthKey].expenses += parseFloat(t.amount)
+      }
+    })
+    
+    monthlyData.value = Object.values(monthlyMap)
+      .sort((a, b) => a.date - b.date)
+      .map(m => {
+        const net = m.income - m.expenses
+        const savingsRate = m.income > 0 ? Math.round((net / m.income) * 100) : 0
+        return {
+          name: m.name,
+          income: m.income,
+          expenses: m.expenses,
+          net,
+          savingsRate
+        }
+      })
+    
+    // Generate chart data
+    const chartLabels = monthlyData.value.map(m => {
+      const parts = m.name.split(' ')
+      return parts[0].substring(0, 3)
+    })
+    
+    chartData.value = {
+      labels: chartLabels,
+      datasets: [
+        {
+          label: 'Income',
+          data: monthlyData.value.map(m => m.income),
+          borderColor: '#22c55e',
+          backgroundColor: 'rgba(34, 197, 94, 0.1)'
+        },
+        {
+          label: 'Expenses',
+          data: monthlyData.value.map(m => m.expenses),
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239, 68, 68, 0.1)'
+        }
+      ]
+    }
+    
+  } catch (error) {
+    console.error('Failed to generate report:', error)
+    toast.error('Failed to load report data')
+  } finally {
+    loading.value = false
+  }
 }
 
 const exportReport = () => {
-  // Export report functionality
-  console.log('Exporting report...')
+  const csvData = [
+    ['Month', 'Income', 'Expenses', 'Net Savings', 'Savings Rate'],
+    ...monthlyData.value.map(m => [
+      m.name,
+      m.income.toFixed(2),
+      m.expenses.toFixed(2),
+      m.net.toFixed(2),
+      m.savingsRate + '%'
+    ])
+  ]
+  
+  const csvContent = csvData.map(row => row.join(',')).join('\n')
+  const blob = new Blob([csvContent], { type: 'text/csv' })
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `financial-report-${new Date().toISOString().split('T')[0]}.csv`
+  link.click()
+  window.URL.revokeObjectURL(url)
+  
+  toast.success('Report exported successfully!')
 }
 
 onMounted(() => {

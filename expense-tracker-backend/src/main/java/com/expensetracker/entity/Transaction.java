@@ -1,5 +1,6 @@
 package com.expensetracker.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
@@ -55,12 +56,14 @@ public class Transaction {
     private LocalDateTime updatedAt;
     
     // Relationships
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)  // Changed to EAGER to avoid lazy loading issues
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnoreProperties({"transactions", "budgets"})  // Ignore circular references
     private User user;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)  // Changed to EAGER so category data is always loaded
     @JoinColumn(name = "category_id", nullable = false)
+    @JsonIgnoreProperties({"transactions", "budgets"})  // Ignore circular references
     private Category category;
     
     @PreUpdate

@@ -2,10 +2,12 @@ package com.expensetracker.service;
 
 import com.expensetracker.entity.User;
 import com.expensetracker.repository.UserRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,6 +21,24 @@ import java.util.Optional;
 public class UserService {
     
     private final UserRepository userRepository;
+    
+    /**
+     * Initialize default demo user on startup
+     */
+    @PostConstruct
+    public void initializeDefaultUser() {
+        if (userRepository.count() == 0) {
+            User demoUser = new User();
+            demoUser.setUsername("johndoe");
+            demoUser.setEmail("john.doe@example.com");
+            demoUser.setFullName("John Doe");
+            demoUser.setActive(true);
+            demoUser.setCreatedAt(LocalDateTime.now());
+            
+            userRepository.save(demoUser);
+            System.out.println("✅ Default demo user created: johndoe");
+        }
+    }
     
     /**
      * Create a new user

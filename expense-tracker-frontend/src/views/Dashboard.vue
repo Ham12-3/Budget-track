@@ -1,140 +1,159 @@
 <template>
   <div class="dashboard">
-    <!-- Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <!-- Total Balance Card -->
-      <div class="stat-card">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-gray-600 mb-1">Total Balance</p>
-            <p class="text-2xl font-bold text-gray-900">
-              ${{ formatMoney(summary.balance) }}
-            </p>
-            <p class="text-sm text-gray-500 mt-1">
-              <span :class="balanceChangeClass">{{ balanceChangePercent }}%</span>
-              vs last month
-            </p>
-          </div>
-          <div class="rounded-full p-3 bg-primary-100">
-            <BanknotesIcon class="w-8 h-8 text-primary-600" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Income Card -->
-      <div class="stat-card">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-gray-600 mb-1">Income</p>
-            <p class="text-2xl font-bold text-success-700">
-              +${{ formatMoney(summary.totalIncome) }}
-            </p>
-            <p class="text-sm text-gray-500 mt-1">This month</p>
-          </div>
-          <div class="rounded-full p-3 bg-success-50">
-            <ArrowTrendingUpIcon class="w-8 h-8 text-success-500" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Expenses Card -->
-      <div class="stat-card">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-gray-600 mb-1">Expenses</p>
-            <p class="text-2xl font-bold text-danger-700">
-              -${{ formatMoney(summary.totalExpenses) }}
-            </p>
-            <p class="text-sm text-gray-500 mt-1">This month</p>
-          </div>
-          <div class="rounded-full p-3 bg-danger-50">
-            <ArrowTrendingDownIcon class="w-8 h-8 text-danger-500" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Savings Rate Card -->
-      <div class="stat-card">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-gray-600 mb-1">Savings Rate</p>
-            <p class="text-2xl font-bold text-gray-900">{{ savingsRate }}%</p>
-            <p class="text-sm text-gray-500 mt-1">Of income</p>
-          </div>
-          <div class="rounded-full p-3 bg-purple-100">
-            <ChartPieIcon class="w-8 h-8 text-purple-600" />
-          </div>
-        </div>
-      </div>
+    <!-- Loading State -->
+    <div v-if="loading" class="flex justify-center items-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
     </div>
 
-    <!-- Charts Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-      <!-- Spending Trend Chart -->
-      <div class="card">
-        <div class="card-body">
-          <h2 class="text-lg font-semibold text-gray-900 mb-4">Spending Trend</h2>
-          <SpendingTrendChart :data="spendingTrendData" />
+    <template v-else>
+      <!-- Summary Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Total Balance Card -->
+        <div class="stat-card">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-600 mb-1">Total Balance</p>
+              <p class="text-2xl font-bold text-gray-900">
+                ${{ formatMoney(summary.balance) }}
+              </p>
+              <p class="text-sm text-gray-500 mt-1">
+                <span :class="balanceChangeClass">{{ balanceChangePercent }}%</span>
+                vs last month
+              </p>
+            </div>
+            <div class="rounded-full p-3 bg-primary-100">
+              <BanknotesIcon class="w-8 h-8 text-primary-600" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Income Card -->
+        <div class="stat-card">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-600 mb-1">Income</p>
+              <p class="text-2xl font-bold text-success-700">
+                +${{ formatMoney(summary.totalIncome) }}
+              </p>
+              <p class="text-sm text-gray-500 mt-1">This month</p>
+            </div>
+            <div class="rounded-full p-3 bg-success-50">
+              <ArrowTrendingUpIcon class="w-8 h-8 text-success-500" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Expenses Card -->
+        <div class="stat-card">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-600 mb-1">Expenses</p>
+              <p class="text-2xl font-bold text-danger-700">
+                -${{ formatMoney(summary.totalExpenses) }}
+              </p>
+              <p class="text-sm text-gray-500 mt-1">This month</p>
+            </div>
+            <div class="rounded-full p-3 bg-danger-50">
+              <ArrowTrendingDownIcon class="w-8 h-8 text-danger-500" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Savings Rate Card -->
+        <div class="stat-card">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-600 mb-1">Savings Rate</p>
+              <p class="text-2xl font-bold text-gray-900">{{ savingsRate }}%</p>
+              <p class="text-sm text-gray-500 mt-1">Of income</p>
+            </div>
+            <div class="rounded-full p-3 bg-purple-100">
+              <ChartPieIcon class="w-8 h-8 text-purple-600" />
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Category Breakdown Chart -->
-      <div class="card">
-        <div class="card-body">
-          <h2 class="text-lg font-semibold text-gray-900 mb-4">Category Breakdown</h2>
-          <CategoryBreakdownChart :data="categoryBreakdownData" />
-        </div>
-      </div>
-    </div>
-
-    <!-- Recent Transactions and Budget Alerts -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Recent Transactions -->
-      <div class="card">
-        <div class="card-body">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-gray-900">Recent Transactions</h2>
-            <router-link to="/transactions" class="text-primary-600 hover:text-primary-700 text-sm font-medium">
-              View all →
-            </router-link>
+      <!-- Charts Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Spending Trend Chart -->
+        <div class="card">
+          <div class="card-body">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Spending Trend</h2>
+            <SpendingTrendChart :data="spendingTrendData" />
           </div>
-          
-          <div class="space-y-3">
-            <TransactionItem
-              v-for="transaction in recentTransactions"
-              :key="transaction.id"
-              :transaction="transaction"
-              compact
-            />
+        </div>
+
+        <!-- Category Breakdown Chart -->
+        <div class="card">
+          <div class="card-body">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Category Breakdown</h2>
+            <CategoryBreakdownChart :data="categoryBreakdownData" />
           </div>
         </div>
       </div>
 
-      <!-- Budget Alerts -->
-      <div class="card">
-        <div class="card-body">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-gray-900">Budget Status</h2>
-            <router-link to="/budgets" class="text-primary-600 hover:text-primary-700 text-sm font-medium">
-              Manage →
-            </router-link>
+      <!-- Recent Transactions and Budget Alerts -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Recent Transactions -->
+        <div class="card">
+          <div class="card-body">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-semibold text-gray-900">Recent Transactions</h2>
+              <router-link to="/transactions" class="text-primary-600 hover:text-primary-700 text-sm font-medium">
+                View all →
+              </router-link>
+            </div>
+            
+            <div v-if="recentTransactions.length === 0" class="text-center py-8 text-gray-500">
+              <p>No transactions yet</p>
+              <router-link to="/transactions" class="text-primary-600 hover:text-primary-700 text-sm font-medium mt-2 inline-block">
+                Add your first transaction →
+              </router-link>
+            </div>
+            <div v-else class="space-y-3">
+              <TransactionItem
+                v-for="transaction in recentTransactions"
+                :key="transaction.id"
+                :transaction="transaction"
+                compact
+              />
+            </div>
           </div>
-          
-          <div class="space-y-3">
-            <BudgetAlert
-              v-for="budget in budgetAlerts"
-              :key="budget.id"
-              :budget="budget"
-            />
+        </div>
+
+        <!-- Budget Alerts -->
+        <div class="card">
+          <div class="card-body">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-semibold text-gray-900">Budget Status</h2>
+              <router-link to="/budgets" class="text-primary-600 hover:text-primary-700 text-sm font-medium">
+                Manage →
+              </router-link>
+            </div>
+            
+            <div v-if="budgetAlerts.length === 0" class="text-center py-8 text-gray-500">
+              <p>No budgets set</p>
+              <router-link to="/budgets" class="text-primary-600 hover:text-primary-700 text-sm font-medium mt-2 inline-block">
+                Set up budgets →
+              </router-link>
+            </div>
+            <div v-else class="space-y-3">
+              <BudgetAlert
+                v-for="budget in budgetAlerts"
+                :key="budget.id"
+                :budget="budget"
+              />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onActivated } from 'vue'
 import {
   BanknotesIcon,
   ArrowTrendingUpIcon,
@@ -153,100 +172,27 @@ const transactionsStore = useTransactionsStore()
 const userStore = useUserStore()
 
 // Data
+const loading = ref(false)
 const summary = ref({
-  balance: 5250.00,
-  totalIncome: 8500.00,
-  totalExpenses: 3250.00
+  balance: 0,
+  totalIncome: 0,
+  totalExpenses: 0
 })
 
-const recentTransactions = ref([
-  {
-    id: 1,
-    amount: 120.50,
-    description: 'Grocery Shopping',
-    category: { name: 'Food & Dining', icon: '🍔', color: '#FF6384' },
-    type: 'EXPENSE',
-    transactionDate: new Date().toISOString()
-  },
-  {
-    id: 2,
-    amount: 3500.00,
-    description: 'Monthly Salary',
-    category: { name: 'Income', icon: '💵', color: '#32CD32' },
-    type: 'INCOME',
-    transactionDate: new Date().toISOString()
-  },
-  {
-    id: 3,
-    amount: 45.99,
-    description: 'Netflix Subscription',
-    category: { name: 'Entertainment', icon: '🎬', color: '#4BC0C0' },
-    type: 'EXPENSE',
-    transactionDate: new Date().toISOString()
-  }
-])
-
-const budgetAlerts = ref([
-  {
-    id: 1,
-    category: 'Food & Dining',
-    budgetAmount: 500,
-    spent: 420,
-    percentage: 84
-  },
-  {
-    id: 2,
-    category: 'Transportation',
-    budgetAmount: 300,
-    spent: 180,
-    percentage: 60
-  },
-  {
-    id: 3,
-    category: 'Entertainment',
-    budgetAmount: 200,
-    spent: 195,
-    percentage: 97.5
-  }
-])
-
+const recentTransactions = ref([])
+const budgetAlerts = ref([])
 const spendingTrendData = ref({
-  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-  datasets: [
-    {
-      label: 'Income',
-      data: [8500, 9200, 8800, 9500, 8500, 8500],
-      borderColor: '#22c55e',
-      backgroundColor: 'rgba(34, 197, 94, 0.1)'
-    },
-    {
-      label: 'Expenses',
-      data: [3200, 2800, 3500, 3100, 2900, 3250],
-      borderColor: '#ef4444',
-      backgroundColor: 'rgba(239, 68, 68, 0.1)'
-    }
-  ]
+  labels: [],
+  datasets: []
 })
-
 const categoryBreakdownData = ref({
-  labels: ['Food', 'Transport', 'Shopping', 'Entertainment', 'Bills', 'Other'],
-  datasets: [{
-    data: [850, 450, 620, 195, 980, 155],
-    backgroundColor: [
-      '#FF6384',
-      '#36A2EB',
-      '#FFCE56',
-      '#4BC0C0',
-      '#9966FF',
-      '#C9CBCF'
-    ]
-  }]
+  labels: [],
+  datasets: []
 })
 
 // Computed
 const balanceChangePercent = computed(() => {
-  // Mock calculation
-  return 12.5
+  return summary.value.balanceChange || 0
 })
 
 const balanceChangeClass = computed(() => {
@@ -264,11 +210,12 @@ const formatMoney = (amount) => {
   return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
-  }).format(amount)
+  }).format(amount || 0)
 }
 
 // Load dashboard data
 const loadDashboardData = async () => {
+  loading.value = true
   const userId = userStore.currentUser.id
   const now = new Date()
   const month = now.getMonth() + 1
@@ -276,23 +223,111 @@ const loadDashboardData = async () => {
   
   try {
     // Fetch monthly summary
-    const response = await api.get(`/users/${userId}/transactions/summary/monthly`, {
+    const summaryResponse = await api.get(`/users/${userId}/transactions/summary/monthly`, {
       params: { month, year }
     })
     
     summary.value = {
-      balance: response.data.balance || 0,
-      totalIncome: response.data.totalIncome || 0,
-      totalExpenses: response.data.totalExpenses || 0
+      balance: summaryResponse.data.balance || 0,
+      totalIncome: summaryResponse.data.totalIncome || 0,
+      totalExpenses: summaryResponse.data.totalExpenses || 0,
+      balanceChange: summaryResponse.data.balanceChange || 0
     }
     
-    // You can also fetch recent transactions and budget alerts here
+    // Fetch recent transactions (last 5)
+    const transactionsResponse = await api.get(`/users/${userId}/transactions`, {
+      params: { page: 0, size: 5, sortBy: 'transactionDate', sortDirection: 'DESC' }
+    })
+    recentTransactions.value = transactionsResponse.data.content || []
+    
+    // Fetch budget alerts
+    const budgetsResponse = await api.get(`/users/${userId}/budgets/alerts`)
+    budgetAlerts.value = budgetsResponse.data || []
+    
+    // Fetch spending trend data (last 6 months)
+    const trendResponse = await api.get(`/users/${userId}/transactions/summary/yearly`, {
+      params: { year }
+    })
+    
+    // Process trend data for chart
+    if (trendResponse.data && trendResponse.data.monthlyData) {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+      const last6Months = []
+      const incomeData = []
+      const expenseData = []
+      
+      for (let i = 5; i >= 0; i--) {
+        const date = new Date()
+        date.setMonth(date.getMonth() - i)
+        const monthIndex = date.getMonth()
+        last6Months.push(months[monthIndex])
+        
+        const monthData = trendResponse.data.monthlyData.find(m => m.month === monthIndex + 1)
+        incomeData.push(monthData?.income || 0)
+        expenseData.push(monthData?.expenses || 0)
+      }
+      
+      spendingTrendData.value = {
+        labels: last6Months,
+        datasets: [
+          {
+            label: 'Income',
+            data: incomeData,
+            borderColor: '#22c55e',
+            backgroundColor: 'rgba(34, 197, 94, 0.1)'
+          },
+          {
+            label: 'Expenses',
+            data: expenseData,
+            borderColor: '#ef4444',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)'
+          }
+        ]
+      }
+    }
+    
+    // Fetch category breakdown
+    const categoryResponse = await api.get(`/users/${userId}/transactions`, {
+      params: { 
+        startDate: `${year}-${month.toString().padStart(2, '0')}-01`,
+        endDate: new Date(year, month, 0).toISOString().split('T')[0],
+        type: 'EXPENSE'
+      }
+    })
+    
+    // Group by category
+    const categoryMap = {}
+    categoryResponse.data.content?.forEach(transaction => {
+      const catName = transaction.category?.name || 'Other'
+      const catColor = transaction.category?.color || '#C9CBCF'
+      if (!categoryMap[catName]) {
+        categoryMap[catName] = { amount: 0, color: catColor }
+      }
+      categoryMap[catName].amount += parseFloat(transaction.amount)
+    })
+    
+    categoryBreakdownData.value = {
+      labels: Object.keys(categoryMap),
+      datasets: [{
+        data: Object.values(categoryMap).map(c => c.amount),
+        backgroundColor: Object.values(categoryMap).map(c => c.color)
+      }]
+    }
+    
   } catch (error) {
     console.error('Failed to load dashboard data:', error)
+  } finally {
+    loading.value = false
   }
 }
 
+// Lifecycle hooks
 onMounted(() => {
+  loadDashboardData()
+})
+
+// Reload data when component is activated (navigated back to)
+onActivated(() => {
   loadDashboardData()
 })
 </script>

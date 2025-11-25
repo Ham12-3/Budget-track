@@ -1,5 +1,7 @@
 package com.expensetracker.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -45,12 +47,15 @@ public class User {
     private LocalDateTime createdAt;
     
     @Column(name = "is_active")
+    @JsonProperty("isActive")  // Ensure consistent JSON property name
     private boolean active = true;
     
-    // Relationships
+    // Relationships - Ignored in JSON responses to prevent lazy loading issues
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Transaction> transactions = new ArrayList<>();
     
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Budget> budgets = new ArrayList<>();
 }
