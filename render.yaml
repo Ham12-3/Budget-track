@@ -9,12 +9,8 @@ services:
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: docker
-      - key: DATABASE_URL
-        fromDatabase:
-          name: budget-tracker-db
-          property: connectionString
       - key: SPRING_DATASOURCE_URL
-        value: jdbc:${DATABASE_URL}
+        value: jdbc:postgresql://${budget-tracker-db.host}:${budget-tracker-db.port}/${budget-tracker-db.database}
       - key: SPRING_DATASOURCE_USERNAME
         fromDatabase:
           name: budget-tracker-db
